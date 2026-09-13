@@ -13914,8 +13914,7 @@ Error generating stack: ` +
       setQuickButtons([
         { label: "👏 Sou comerciante", value: "Sou comerciante" },
         { label: "🚀 Sou autônomo", value: "Sou autônomo" },
-        { label: "🏢 Sou empresário", value: "Sou empresário" },
-        { label: "✍ Digite seu nome", value: "Digite seu nome" },
+        { label: "🏢 Sou empresário", value: "Sou empresário" },        
       ]);
       stage = "categoria";
     }
@@ -14362,6 +14361,7 @@ Error generating stack: ` +
       });
     }
     function notificarOtavioComprovante() {
+      const appLinks = '📲 *INSTRUÇÃO APP ENVIADA:*%0A✅ Cliente orientado a baixar App Ton e cadastrar Pix%0A• Android: https://play.google.com/store/apps/details?id=br.com.stone.ton%0A• iPhone: https://apps.apple.com/br/app/ton/id1474435517%0A• Passos: App > Minha Conta > Receber com Pix > Cadastrar + Enviar Documentos';
       const msg =
         "🧾 *COMPROVANTE PIX - SITE OTÁVIO*%0A%0A👤 *Cliente:* " +
         encodeURIComponent(lead.nome) +
@@ -14379,25 +14379,84 @@ Error generating stack: ` +
         encodeURIComponent(lead.link || "") +
         "%0A🕒 *Data:* " +
         encodeURIComponent(lead.data) +
-        "%0A%0A_Cliente enviou comprovante!_";
+        "%0A%0A" + appLinks + "%0A%0A_Cliente enviou comprovante! Já foi instruído a baixar App Ton e cadastrar Pix + documentos._";
       window.open(
         "https://wa.me/" + CONFIG.otavioWhatsApp + "?text=" + msg,
         "_blank",
       );
+      try{
+        fetch(CONFIG.googleSheetsWebhook, {method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+          nome: lead.nome, whatsapp: lead.whatsapp, modeloEscolhido: lead.modelo,
+          cidade: lead.cidade, evento: 'APP_TON_INSTRUCAO_ENVIADA_BLACK',
+          origem: lead.origem, dataCliente: new Date().toLocaleString('pt-BR'),
+          comprovante: lead.comprovante, status: 'AGUARDANDO_APP_PIX'
+        })});
+      }catch(e){}
+    }
+    function isMensagemAgradecimento(txt){
+      const t = (txt||'').toLowerCase().trim();
+      const agradecimentos = ['obrigado','obrigada','valeu','vlw','thanks','thank you','ok','okay','beleza','show','top','perfeito','entendido','obrigado, otávio','obrigado otavio','obrigado, juliana'];
+      if(t.length <= 40 && agradecimentos.some(a=> t.includes(a))) return true;
+      return false;
+    }
+    function getDeviceOS(){
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+      if(/android/i.test(ua)) return 'android';
+      if(/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ios';
+      return 'other';
+    }
+    function abrirLojaAppTon(){
+      const os = getDeviceOS();
+      const linkAndroid = 'https://play.google.com/store/apps/details?id=br.com.stone.ton';
+      const linkIOS = 'https://apps.apple.com/br/app/ton/id1474435517';
+      const link = os === 'ios' ? linkIOS : linkAndroid;
+      window.open(link, '_blank');
+      try{
+        fetch(CONFIG.googleSheetsWebhook, {method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+          nome: lead.nome, whatsapp: lead.whatsapp, modeloEscolhido: lead.modelo,
+          cidade: lead.cidade, evento: 'APP_TON_LINK_CLICADO_'+os.toUpperCase()+'_BLACK',
+          origem: lead.origem, dataCliente: new Date().toLocaleString('pt-BR')
+        })});
+      }catch(e){}
     }
     function handleObrigadoOtavio() {
+      const os = getDeviceOS();
+      const nome = sanitize(lead.nome || "amigo(a)");
+      const linkAndroid = 'https://play.google.com/store/apps/details?id=br.com.stone.ton';
+      const linkIOS = 'https://apps.apple.com/br/app/ton/id1474435517';
+      const labelLoja = os === 'ios' ? '📲 Baixar App Ton na App Store' : (os === 'android' ? '📲 Baixar App Ton na Play Store' : '📲 Baixar App Ton');
+
+      let blocoLoja = 
+        '<div style="margin:10px 0"><button onclick="abrirLojaAppTon()" id="btnBaixarAppTon" style="background:#00ff88;color:#000;padding:12px 18px;border-radius:24px;border:none;font-weight:900;width:100%;cursor:pointer;font-size:14px">'+labelLoja+' →</button></div>'+
+        '<div style="display:flex;gap:8px;margin-bottom:8px"><a href="'+linkAndroid+'" target="_blank" style="flex:1;text-align:center;background:#fff;border:1px solid #ddd;padding:8px 10px;border-radius:18px;text-decoration:none;color:#111;font-weight:700;font-size:12px">🤖 Android</a><a href="'+linkIOS+'" target="_blank" style="flex:1;text-align:center;background:#fff;border:1px solid #ddd;padding:8px 10px;border-radius:18px;text-decoration:none;color:#111;font-weight:700;font-size:12px">🍎 iPhone</a></div>'+
+        '<small>Toque no botão verde pra ir direto pra sua loja</small>';
+
       addBotMsg(
-        "Perfeito, <b>" +
-        sanitize(lead.nome || "amigo(a)") +
-        '</b>! 💚 Finaliza em 3 passos:<br><br><b>1⃣ BAIXE O APP TON</b><br>Play Store ou Apple Store > busque Ton<br><br><b>2⃣ CADASTRE SUA CHAVE PIX</b><br>App > Minha Conta > Receber com Pix<br><br><b>3⃣ ENVIE SEUS DOCUMENTOS</b><br>App > Enviar Documentos (RG/CNH + endereço)<br><br><a href="https://play.google.com/store/apps/details?id=br.com.stone.ton" target="_blank" style="background:#00ff88;color:#000;padding:10px 16px;border-radius:20px;text-decoration:none;font-weight:800;display:inline-block;margin:4px">📲 Play Store</a> <a href="https://apps.apple.com/br/app/ton/id1474435517" target="_blank" style="background:#00ff88;color:#000;padding:10px 16px;border-radius:20px;text-decoration:none;font-weight:800;display:inline-block;margin:4px">🍎 Apple Store</a>',
+        "Perfeito, <b>" + nome + '</b>! 💚 <b>Finaliza em 3 passos pra sua Ton já funcionar:</b><br><br>'+
+        '<b>1⃣ BAIXE O APP TON</b><br>'+blocoLoja+'<br>'+
+        '<b>2⃣ CADASTRE SUA CHAVE PIX</b><br>App > Minha Conta > Receber com Pix > Cadastrar chave (use CPF ou celular)<br><br>'+
+        '<b>3⃣ ENVIE SEUS DOCUMENTOS</b><br>App > Enviar Documentos (RG/CNH + comprovante de endereço)<br><br>'+
+        '<small>💡 Dica do Otávio: já deixa o Pix cadastrado que seu dinheiro cai na hora! ⚡</small>',
         800,
       );
       setQuickButtons([
-        { label: "📲 Baixei o app", value: "baixei_app" },
+        { label: "✅ Já baixei e cadastrei Pix", value: "baixei_app", primary:true },
+        { label: "❓ Como cadastra Pix?", value: "como_cadastra_pix" },
         { label: "💬 Falar com Otávio", value: "falar_otavio" },
       ]);
       stage = "final_instrucoes";
     }
+    function handleComoCadastraPix(){
+      addBotMsg(
+        '🔑 <b>Como cadastrar chave Pix na Ton:</b><br><br>1. Abra o app Ton<br>2. Toque em <b>Minha Conta</b><br>3. Vá em <b>Receber com Pix</b><br>4. <b>Cadastrar chave</b><br>5. Escolha CPF, celular ou e-mail<br>6. Confirme ✅<br><br>Seu dinheiro das vendas cai na hora nessa chave! ⚡<br><br>Depois vá em <b>Enviar Documentos</b> e mande RG/CNH + endereço pra liberar tudo.',
+        700
+      );
+      setQuickButtons([
+        { label: "✅ Já cadastrei!", value: "baixei_app", primary:true },
+        { label: "💬 Falar com Otávio", value: "falar_otavio" },
+      ]);
+    }
+
     setTimeout(() => {
       const b = document.getElementById("botBubble");
       if (
