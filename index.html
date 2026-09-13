@@ -272,8 +272,7 @@ function startFlow(){
   setQuickButtons([
     {label:'👏 Sou comerciante', value:'Sou comerciante'},
     {label:'🚀 Sou autônomo', value:'Sou autônomo'},
-    {label:'🏢 Sou empresário', value:'Sou empresário'},
-    {label:'✍️ Digite seu nome', value:'Digite seu nome'}
+    {label:'🏢 Sou empresário', value:'Sou empresário'},    
   ]);
   stage='categoria';
 }
@@ -295,9 +294,10 @@ function askModel(){
   addBotMsg('Perfeito! Atendo <b>'+sanitize(lead.cidade)+'</b> com frete grátis. ✅<br><br><b>Qual modelo você quer garantir com 0,57% hoje?</b><br><small>Todos sem aluguel nunca!</small>',400);
   setTimeout(()=>{
     setQuickButtons([
-      {label:'💳 T1 - Essencial', value:'T1'},
-      {label:'🔥 T2+ - Mais Vendida', value:'T2+', primary:true},
-      {label:'🤖 T3 Smart Android', value:'T3 Smart'}
+      {label:'T1 - Essencial', value:'T1'},
+      {label:'T2+ - Mais Vendida', value:'T2+', primary:true},
+      {label:'T3 - A maquininha com comprovante impresso', value: 'T3', primary:true},
+      {label:'T3 Smart Android', value:'T3 Smart'}
     ]);
   },600);
   stage='modelo';
@@ -589,7 +589,7 @@ function processarArquivoComprovante(file){
   updateProgress(100);
 
   setTimeout(()=>{
-    addBotMsg('✅ <b>Comprovante recebido, '+sanitize(lead.nome||'!')+'</b><br><br>Já encaminhei tudo pra <b>Juliana</b> no WhatsApp <b>(48) 99829-0105</b>. Ela vai confirmar seu pagamento e ativar sua maquininha com taxa <b>0,57%</b> garantida em até 30 minutos! 💚',600);
+    addBotMsg('✅ <b>Comprovante recebido, '+sanitize(lead.nome||'!')+'</b><br><br>Já encaminhei tudo pra <b>Juliana</b> no WhatsApp <b>(48) 99829-0105</b>. Ela vai confirmar seu pagamento com taxa <b>0,57%</b> garantida em até 30 minutos! 💚',600);
     salvarComprovanteNoSheets();
     notificarJulianaComprovante();
   }, file.type.startsWith('image/') ? 900 : 400);
